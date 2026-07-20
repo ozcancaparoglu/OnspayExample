@@ -5,6 +5,11 @@ namespace Domain.Orders;
 
 public sealed class OrderItem : AuditableEntity<Guid>
 {
+    //For Ef Migrations
+    private OrderItem() : base(Guid.CreateVersion7())
+    {
+    }
+    
     private OrderItem(Guid id,
         Guid orderId,
         int stock,
