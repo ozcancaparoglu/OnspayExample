@@ -5,6 +5,7 @@ using Infrastructure;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Onspay.AspNetCore;
 using Onspay.AspNetCore.Extensions;
+using Onspay.Infrastructure.Correlation;
 using Onspay.Infrastructure.Logging;
 using Onspay.Infrastructure.Logging.Elasticsearch;
 using Scalar.AspNetCore;
@@ -12,7 +13,11 @@ using Web.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseOnspayLogging((cfg, ctx) => cfg.WriteToElasticsearch(ctx));builder.Services.AddOpenApi();
+builder.Host.UseOnspayLogging((cfg, ctx) => cfg.WriteToElasticsearch(ctx));
+
+builder.Services.AddOpenApi();
+
+builder.Services.AddCorrelation();
 
 builder.Services
     .AddApplication(builder.Configuration)

@@ -22,7 +22,7 @@ namespace Infrastructure.Database.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     number = table.Column<int>(type: "integer", nullable: false),
                     status = table.Column<int>(type: "integer", nullable: false),
-                    Description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
+                    description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
                     total_amount_amount = table.Column<decimal>(type: "numeric", nullable: false),
                     total_amount_currency = table.Column<string>(type: "text", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -40,8 +40,7 @@ namespace Infrastructure.Database.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     order_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Stock = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
-                    Name = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    product_name = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     quantity = table.Column<int>(type: "integer", nullable: false),
                     amount_amount = table.Column<decimal>(type: "numeric", nullable: false),
                     amount_currency = table.Column<string>(type: "text", nullable: false),

@@ -18,7 +18,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.Status).IsRequired();
 
         builder.Property(o => o.Description)
-            .HasColumnName(nameof(Order.Description))
+            .HasColumnName("description")
             .HasConversion(description => description.Value, value => Description.From(value))
             .HasMaxLength(1000)
             .IsRequired();

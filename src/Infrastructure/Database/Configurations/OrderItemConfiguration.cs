@@ -15,15 +15,10 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
 
         builder.Property(oi => oi.OrderId).IsRequired();
 
-        builder.Property(oi => oi.Name)
-            .HasColumnName(nameof(OrderItem.Name))
+        builder.Property(oi => oi.ProductName)
+            .HasColumnName("product_name")
             .HasConversion(name => name.Value, value => Name.From(value))
             .HasMaxLength(500)
-            .IsRequired();
-
-        builder.Property(x => x.Stock)
-            .HasColumnName(nameof(OrderItem.Stock))
-            .HasDefaultValue(0)
             .IsRequired();
 
         builder.OwnsOne(orderItem => orderItem.Amount, amountBuilder =>
