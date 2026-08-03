@@ -15,10 +15,11 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Onspay.AspNetCore" Version="1.0.21" />
-        <PackageReference Include="Onspay.Infrastructure.Logging" Version="1.0.21" />
-        <PackageReference Include="Onspay.Infrastructure.Logging.Elasticsearch" Version="1.0.21" />
+        <PackageReference Include="Onspay.AspNetCore" Version="1.0.29" />
+        <PackageReference Include="Onspay.Infrastructure.Logging" Version="1.0.29" />
+        <PackageReference Include="Onspay.Infrastructure.Logging.Elasticsearch" Version="1.0.29" />
         <PackageReference Include="Scalar.AspNetCore" Version="2.16.15" />
+        <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
     </ItemGroup>
 
     <ItemGroup>

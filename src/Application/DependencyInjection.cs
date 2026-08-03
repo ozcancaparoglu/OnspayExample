@@ -9,7 +9,7 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddCqrs(typeof(DependencyInjection).Assembly);
+        services.AddCqrs(configuration, typeof(DependencyInjection).Assembly);
         return services;
     }
 }

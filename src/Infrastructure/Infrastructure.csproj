@@ -15,7 +15,7 @@
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
-      <PackageReference Include="Onspay.Infrastructure.DomainEvents" Version="1.0.21" />
+      <PackageReference Include="Onspay.Infrastructure.DomainEvents" Version="1.0.29" />
     </ItemGroup>
 
     <ItemGroup>
