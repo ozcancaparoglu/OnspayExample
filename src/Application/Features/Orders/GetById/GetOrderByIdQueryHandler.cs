@@ -15,45 +15,74 @@ internal sealed class GetOrderByIdQueryHandler(ISqlConnectionFactory sqlConnecti
 
         const string sql = """
             SELECT
-                o.id AS "Id",
-                o.number AS "Number",
-                o.status AS "Status",
-                o."description" AS "Description",
-                o.total_amount_amount AS "TotalAmount",
-                o.total_amount_currency AS "Currency",
-                o.created_at AS "CreatedAt",
-                oi.id AS "Id",
-                oi."product_name" AS "ProductName",
-                oi.quantity AS "Quantity",
-                oi.amount_amount AS "Price",
-                oi.amount_currency AS "Currency"
+                o.id AS Id,
+                o.number AS Number,
+                o.status AS Status,
+                o.description AS Description,
+                o.total_amount_amount AS TotalAmount,
+                o.total_amount_currency AS Currency,
+                o.created_at AS CreatedAt,
+                oi.id AS ItemId,
+                oi.product_name AS ProductName,
+                oi.quantity AS Quantity,
+                oi.price_amount AS Price,
+                oi.price_currency AS Currency
             FROM public.orders o
-            LEFT JOIN public."order-items" oi ON oi.order_id = o.id
+            LEFT JOIN public.order_items oi ON oi.order_id = o.id
             WHERE o.id = @Id
+            ORDER BY oi.created_at
             """;
 
-        var orders = new Dictionary<Guid, OrderDetailsResponse>();
+        OrderRow? order = null;
+        var items = new List<OrderItemResponse>();
 
-        await connection.QueryAsync<OrderDetailsResponse, OrderItemResponse, OrderDetailsResponse>(
-            sql,
-            (order, item) =>
+        // Dapper maps the flat rows into mutable row types (a response record whose constructor also takes
+        // Items can't be materialized); the response is assembled afterwards.
+        await connection.QueryAsync<OrderRow, OrderItemRow?, OrderRow>(
+            new CommandDefinition(sql, new { query.Id }, cancellationToken: cancellationToken),
+            (orderRow, itemRow) =>
             {
-                if (!orders.TryGetValue(order.Id, out var existingOrder))
-                {
-                    existingOrder = order with { Items = [] };
-                    orders.Add(existingOrder.Id, existingOrder);
-                }
+                order ??= orderRow;
 
-                if (item.Id != Guid.Empty)
-                    existingOrder.Items.Add(item);
+                if (itemRow is not null)
+                    items.Add(new OrderItemResponse(
+                        itemRow.ItemId, itemRow.ProductName, itemRow.Quantity, itemRow.Price, itemRow.Currency));
 
-                return existingOrder;
+                return orderRow;
             },
-            new { query.Id },
-            splitOn: "Id");
+            splitOn: "ItemId");
 
-        return orders.TryGetValue(query.Id, out var orderResponse)
-            ? orderResponse
-            : Result.Failure<OrderDetailsResponse>(OrderErrors.NotFound(query.Id));
+        if (order is null)
+            return Result.Failure<OrderDetailsResponse>(OrderErrors.NotFound(query.Id));
+
+        return new OrderDetailsResponse(
+            order.Id,
+            order.Number,
+            (OrderStatus)order.Status,
+            order.Description,
+            order.TotalAmount,
+            order.Currency,
+            order.CreatedAt,
+            items);
+    }
+
+    private sealed class OrderRow
+    {
+        public Guid Id { get; init; }
+        public int Number { get; init; }
+        public int Status { get; init; }
+        public string Description { get; init; } = string.Empty;
+        public decimal TotalAmount { get; init; }
+        public string Currency { get; init; } = string.Empty;
+        public DateTime CreatedAt { get; init; }
+    }
+
+    private sealed class OrderItemRow
+    {
+        public Guid ItemId { get; init; }
+        public string ProductName { get; init; } = string.Empty;
+        public int Quantity { get; init; }
+        public decimal Price { get; init; }
+        public string Currency { get; init; } = string.Empty;
     }
 }

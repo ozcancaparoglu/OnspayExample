@@ -1,5 +1,4 @@
 using Application.Features.Orders.Create;
-using Domain.Orders.Helpers;
 using Onspay.AspNetCore.Endpoints;
 using Onspay.AspNetCore.Extensions;
 using Onspay.AspNetCore.Responses;
@@ -16,13 +15,14 @@ internal sealed class Create : IEndpoint
                 ICommandHandler<CreateOrderCommand, Guid> commandHandler,
                 CancellationToken cancellationToken) =>
             {
-                var result = await commandHandler.Handle(
-                    new CreateOrderCommand(request.OrderNumber, 
-                        request.OrderStatus, 
-                        request.Description, 
-                        request.Items.Select(item => 
-                            new CreateOrderItemCommand(item.ProductName, item.Quantity, item.Price)).ToList()),
-                    cancellationToken);
+                var command = new CreateOrderCommand(
+                    request.OrderNumber,
+                    request.Description,
+                    request.Items
+                        .Select(item => new CreateOrderItemCommand(item.ProductName, item.Quantity, item.Price))
+                        .ToList());
+
+                var result = await commandHandler.Handle(command, cancellationToken);
 
                 return result.ToCreatedApiResponse(id => $"orders/{id}");
             })
@@ -32,12 +32,12 @@ internal sealed class Create : IEndpoint
             .Produces<ApiResponse<Guid>>(StatusCodes.Status400BadRequest);
     }
 }
+
 internal sealed record CreateOrderRequest(
     int OrderNumber,
-    OrderStatus OrderStatus,
-    string Description,
+    string? Description,
     List<CreateOrderItemRequest> Items);
-    
+
 internal sealed record CreateOrderItemRequest(
     string ProductName,
     int Quantity,

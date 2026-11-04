@@ -2,28 +2,31 @@ using Application.Features.Orders.GetAll;
 using Application.Features.Orders.Responses;
 using Onspay.AspNetCore.Endpoints;
 using Onspay.AspNetCore.Extensions;
+using Onspay.AspNetCore.Responses;
 using Onspay.Cqrs.Messaging;
 
 namespace Web.Api.Endpoints.Orders;
 
-public sealed class GetAll : IEndpoint
+internal sealed class GetAll : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.Map("orders", async (
+        app.MapGet("orders", async (
                 IQueryHandler<GetAllOrdersQuery, IReadOnlyList<OrderResponse>> queryHandler,
-                int pageIndex, int pageSize, CancellationToken cancellationToken) =>
+                CancellationToken cancellationToken,
+                int pageIndex = 0,
+                int pageSize = 100) =>
             {
-                var query = new GetAllOrdersQuery()
+                var query = new GetAllOrdersQuery
                 {
-                    PageIndex = pageIndex,
-                    PageSize = pageSize
+                    PageIndex = Math.Max(pageIndex, 0),
+                    PageSize = Math.Clamp(pageSize, 1, 500)
                 };
                 var response = await queryHandler.Handle(query, cancellationToken);
                 return response.ToApiResponse();
             })
             .WithTags(Tags.Orders)
-            .WithName("GetAll")
-            .Produces<IReadOnlyList<OrderResponse>>();
+            .WithName("GetAllOrders")
+            .Produces<ApiResponse<IReadOnlyList<OrderResponse>>>();
     }
 }

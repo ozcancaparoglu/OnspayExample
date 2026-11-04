@@ -1,6 +1,3 @@
-using Domain.Orders.Helpers;
-using Onspay.SharedKernel;
-
 namespace Domain.Orders.ValueObjects;
 
 public record Currency()
@@ -13,7 +10,7 @@ public record Currency()
     
     private Currency(string code) : this() => Code = code;
     
-    public string Code { get; init; }
+    public string Code { get; init; } = string.Empty;
     
     public static Currency FromCode(string code)
     {

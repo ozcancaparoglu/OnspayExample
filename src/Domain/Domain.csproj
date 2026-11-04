@@ -1,13 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
+<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
-      <PackageReference Include="Onspay.SharedKernel" Version="1.0.29" />
+      <PackageReference Include="Onspay.SharedKernel" />
     </ItemGroup>
 
 </Project>

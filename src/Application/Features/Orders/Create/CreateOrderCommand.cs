@@ -1,15 +1,10 @@
-using Domain.Orders.Helpers;
 using Onspay.Cqrs.Messaging;
 
 namespace Application.Features.Orders.Create;
 
-public record CreateOrderCommand(
+public sealed record CreateOrderCommand(
     int OrderNumber,
-    OrderStatus Status,
     string? Description,
-    List<CreateOrderItemCommand> OrderItems) : ICommand<Guid>;
+    IReadOnlyList<CreateOrderItemCommand> OrderItems) : ICommand<Guid>;
 
-
-public record CreateOrderItemCommand(string Name, int Quantity, decimal Price);
-    
-    
+public sealed record CreateOrderItemCommand(string Name, int Quantity, decimal Price);

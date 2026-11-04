@@ -14,12 +14,13 @@ internal sealed class GetAllOrdersQueryHandler(ISqlConnectionFactory sqlConnecti
 
         const string sql = """
             SELECT
+                o.id AS "Id",
                 o.number AS "OrderNumber",
                 o.status AS "OrderStatus",
                 o.created_at AS "OrderDate",
                 o.total_amount_amount AS "TotalPrice"
             FROM public.orders o
-            ORDER BY o.created_at
+            ORDER BY o.created_at DESC
             LIMIT @PageSize OFFSET @PageIndex * @PageSize
             """;
         

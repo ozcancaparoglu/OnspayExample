@@ -1,26 +1,66 @@
-﻿name: onspay
+name: onspay-example
+
+# Infrastructure only:      docker compose up -d                 (then: dotnet run --project src/Web.Api)
+# Infrastructure + the API:  docker compose --profile api up -d --build
+# Credentials come from .env (copy .env.example).
+
+x-healthcheck: &healthcheck
+  interval: 5s
+  timeout: 5s
+  retries: 20
 
 services:
   # ------------------------------- Postgres --------------------------------
   postgres:
     image: postgres:17
-    container_name: onspay-postgres
+    container_name: onspay-example-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: lT5NkR6VYeqIZNG!
-      POSTGRES_DB: onspay_example
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-onspay_example}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks: [onspay]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      
+      <<: *healthcheck
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+
+  # ------------------------------- RabbitMQ --------------------------------
+  # Management UI: http://localhost:15672
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: onspay-example-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-onspay}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-onspay}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks: [onspay]
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+
+  # -------------------------------- Redis ----------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: onspay-example-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks: [onspay]
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "redis-cli", "ping"]
+
   # ----------------------------- Elasticsearch -----------------------------
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
@@ -32,18 +72,16 @@ services:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ports:
       - "9200:9200"
-      - "9300:9300"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - onspay
+    networks: [onspay]
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      <<: *healthcheck
       interval: 10s
-      timeout: 5s
-      retries: 5
-      
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+
   # -------------------------------- Kibana ---------------------------------
+  # http://localhost:5601
   kibana:
     image: docker.elastic.co/kibana/kibana:8.15.0
     container_name: onspay-example-kibana
@@ -52,14 +90,48 @@ services:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     ports:
       - "5601:5601"
-    networks:
-      - onspay
+    networks: [onspay]
     depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  # --------------------------------- API -----------------------------------
+  # http://localhost:8080/scalar  (Development: migrations applied on startup)
+  api:
+    profiles: [api]
+    build:
+      context: .
+      dockerfile: src/Web.Api/Dockerfile
+    image: onspay-example-api
+    container_name: onspay-example-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__Database: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-onspay_example};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+      Cache__ConnectionString: "redis:6379"
+      RabbitMq__Onspay__Host: rabbitmq
+      RabbitMq__Onspay__Username: ${RABBITMQ_USER:-onspay}
+      RabbitMq__Onspay__Password: ${RABBITMQ_PASSWORD:-onspay}
+      Onspay__Logging__Enabled: ${ONSPAY_LOGGING_ENABLED:-true}
+      Onspay__Logging__Address: http://elasticsearch:9200
+    ports:
+      - "8080:8080"
+    networks: [onspay]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
       elasticsearch:
         condition: service_healthy
 
 volumes:
   postgres_data:
+  rabbitmq_data:
+  redis_data:
   elasticsearch_data:
 
 networks:

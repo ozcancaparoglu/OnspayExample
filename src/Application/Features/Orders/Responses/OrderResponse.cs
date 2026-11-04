@@ -2,7 +2,8 @@ using Domain.Orders.Helpers;
 
 namespace Application.Features.Orders.Responses;
 
-public record OrderResponse(
+public sealed record OrderResponse(
+    Guid Id,
     int OrderNumber,
     OrderStatus OrderStatus,
     DateTime OrderDate,
